@@ -183,22 +183,23 @@ class StatCard(ctk.CTkFrame):
         ctk.CTkButton(self, text="Ver ↗", width=60, fg_color="#333", hover_color="#444", cursor="hand2",
                       command=lambda: webbrowser.open(data['url'])).grid(row=0, column=2, rowspan=2, padx=20)
 
-# ================= WIZARD (ONBOARDING) =================
+# ================= WIZARD (ONBOARDING CORREGIDO) =================
 class OnboardingWizard(ctk.CTkFrame):
     def __init__(self, app, on_complete):
-        super().__init__(app, fg_color=C_BG) # Tapa todo el fondo
+        super().__init__(app, fg_color=C_BG) 
         self.app = app
         self.on_complete = on_complete
         self.step = 0
         
-        # Z-ORDER FIX
         self.place(relx=0, rely=0, relwidth=1, relheight=1)
         self.lift() 
         
-        # Caja Central
-        self.box = ctk.CTkFrame(self, fg_color=C_CARD, corner_radius=20, border_width=1, border_color="#333")
-        self.box.place(relx=0.5, rely=0.5, anchor="center", width=600, height=550)
+        # --- AQUÍ ESTABA EL ERROR CORREGIDO ---
+        # width y height deben ir dentro del constructor, NO en .place()
+        self.box = ctk.CTkFrame(self, width=600, height=550, fg_color=C_CARD, corner_radius=20, border_width=1, border_color="#333")
+        self.box.place(relx=0.5, rely=0.5, anchor="center")
         self.box.pack_propagate(False)
+        # --------------------------------------
         
         self.render_step()
 
