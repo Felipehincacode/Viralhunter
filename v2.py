@@ -5,7 +5,6 @@ import os
 import requests
 import webbrowser
 import time
-import math
 import pandas as pd
 from datetime import datetime, timedelta
 from tkinter import filedialog, messagebox
@@ -118,36 +117,6 @@ class ViralEngine:
         
         return sorted(clean, key=lambda x: x['velocity'], reverse=True)
 
-# ================= FONDO: VANTA TRUNK (MATEMÁTICO) =================
-class VantaTrunkEffect(ctk.CTkCanvas):
-    def __init__(self, master, width, height, **kwargs):
-        super().__init__(master, width=width, height=height, highlightthickness=0, bg=C_BG, **kwargs)
-        self.width = width
-        self.height = height
-        
-        # Configuración del efecto
-        self.spacing = 35       
-        self.chaos = 25         
-        self.color = "#002612"  
-        
-        self.time = 0
-        self.speed = 0.05
-        self.animate()
-
-    def animate(self):
-        self.delete("trunk_line") 
-        step_y = 25 
-        for x_base in range(0, self.width + self.spacing, self.spacing):
-            coords = []
-            for y in range(0, self.height + step_y, step_y):
-                wave1 = math.sin((y * 0.008) + (x_base * 0.005) + self.time) * self.chaos
-                wave2 = math.cos((y * 0.02) - self.time * 1.5) * (self.chaos * 0.4)
-                x_final = x_base + wave1 + wave2
-                coords.extend([x_final, y])
-            self.create_line(coords, fill=self.color, width=2, smooth=True, tags="trunk_line")
-        self.time += self.speed
-        self.after(30, self.animate)
-
 # ================= COMPONENTES UI =================
 class CyberButton(ctk.CTkButton):
     def __init__(self, parent, text, command, **kwargs):
@@ -222,9 +191,11 @@ class OnboardingWizard(ctk.CTkFrame):
         self.on_complete = on_complete
         self.step = 0
         
+        # Z-ORDER FIX
         self.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.lift() 
         
-        # Caja Central del Wizard
+        # Caja Central
         self.box = ctk.CTkFrame(self, fg_color=C_CARD, corner_radius=20, border_width=1, border_color="#333")
         self.box.place(relx=0.5, rely=0.5, anchor="center", width=600, height=550)
         self.box.pack_propagate(False)
@@ -234,7 +205,6 @@ class OnboardingWizard(ctk.CTkFrame):
     def render_step(self):
         for w in self.box.winfo_children(): w.destroy()
         
-        # Datos de los pasos
         steps = [
             {
                 "title": "VIRAL HUNTER",
@@ -267,42 +237,35 @@ class OnboardingWizard(ctk.CTkFrame):
             }
         ]
         
+        if self.step >= len(steps): self.step = 0 
         data = steps[self.step]
         
-        # UI
         ctk.CTkLabel(self.box, text=data["icon"], font=("Arial", 60)).pack(pady=(40, 10))
         ctk.CTkLabel(self.box, text=data["title"], font=FONT_H1, text_color="white").pack(pady=(0, 10))
         ctk.CTkLabel(self.box, text=data["desc"], font=FONT_BODY, text_color=C_TEXT_SEC).pack(pady=(0, 20))
         
         self.current_entry = None
         
-        # Input Key (Pasos 1 y 2)
         if "input_label" in data:
             self.current_entry = CyberInput(self.box, data["input_label"], "🔑")
             self.current_entry.pack(fill="x", padx=50, pady=10)
-            
             ctk.CTkButton(self.box, text="Conseguir Key Gratis ↗", fg_color="transparent", text_color=C_ACCENT,
                           hover_color="#222", cursor="hand2", font=("Roboto", 12),
                           command=lambda: webbrowser.open(data["link"])).pack()
                           
-        # Redes Sociales (Paso 3)
         if "socials" in data:
             social_frame = ctk.CTkFrame(self.box, fg_color="transparent")
             social_frame.pack(fill="x", padx=60, pady=10)
-            
             CyberButton(social_frame, "GitHub: @felipehincacode", 
                         command=lambda: webbrowser.open("https://github.com/felipehincacode"),
                         fg_color="#333", hover_color="#24292e", height=45).pack(fill="x", pady=5)
-                        
             CyberButton(social_frame, "Instagram: @caracol.aventurero", 
                         command=lambda: webbrowser.open("https://instagram.com/caracol.aventurero"),
                         fg_color="#333", hover_color="#C13584", height=45).pack(fill="x", pady=5)
 
-        # Botón Acción
         CyberButton(self.box, data["action"], self.next_step, width=200).pack(side="bottom", pady=40)
 
     def next_step(self):
-        # Guardar keys
         if self.current_entry:
             val = self.current_entry.get().strip()
             if self.step == 1: self.app.config.update("gemini_key", val)
@@ -312,7 +275,7 @@ class OnboardingWizard(ctk.CTkFrame):
         if self.step >= 4:
             self.app.config.update("first_run", False)
             self.destroy()
-            self.on_complete() # Callback para mostrar dashboard
+            self.on_complete()
         else:
             self.render_step()
 
@@ -327,16 +290,8 @@ class App(ctk.CTk):
         self.config = ConfigManager()
         self.engine = ViralEngine()
         
-        # 1. CAPA DE FONDO (Vanta Trunk)
-        self.bg_effect = VantaTrunkEffect(self, width=1200, height=850)
-        self.bg_effect.place(relx=0, rely=0, relwidth=1, relheight=1)
-        
-        # 2. CAPA UI PRINCIPAL (Transparente)
-        self.main_layer = ctk.CTkFrame(self, fg_color="transparent")
-        self.main_layer.place(relx=0, rely=0, relwidth=1, relheight=1)
-        
-        self.main_layer.grid_columnconfigure(1, weight=1)
-        self.main_layer.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
         
         self.create_sidebar()
         self.create_main_area()
@@ -346,15 +301,14 @@ class App(ctk.CTk):
         self.setup_results()
         self.setup_settings()
         
-        # LÓGICA DE INICIO: ¿Wizard o Dashboard?
-        if self.config.data["first_run"]:
-            # Lanzamos el wizard encima de todo
+        # INICIO
+        if self.config.data.get("first_run", True):
             OnboardingWizard(self, on_complete=lambda: self.show_view("dashboard"))
         else:
             self.show_view("dashboard")
 
     def create_sidebar(self):
-        self.sidebar = ctk.CTkFrame(self.main_layer, width=250, fg_color=C_SIDEBAR, corner_radius=0)
+        self.sidebar = ctk.CTkFrame(self, width=250, fg_color=C_SIDEBAR, corner_radius=0)
         self.sidebar.grid(row=0, column=0, sticky="nsew")
         
         ctk.CTkLabel(self.sidebar, text="VIRAL\nHUNTER", font=FONT_LOGO, text_color=C_ACCENT).pack(pady=50)
@@ -373,7 +327,7 @@ class App(ctk.CTk):
         self.nav_btns[view] = btn
 
     def create_main_area(self):
-        self.main_container = ctk.CTkFrame(self.main_layer, fg_color="transparent")
+        self.main_container = ctk.CTkFrame(self, fg_color="transparent")
         self.main_container.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
 
     # --- VISTAS ---
@@ -381,17 +335,17 @@ class App(ctk.CTk):
         self.views["dashboard"] = ctk.CTkFrame(self.main_container, fg_color="transparent")
         v = self.views["dashboard"]
         
-        center_box = ctk.CTkFrame(v, fg_color="#111111", border_width=1, border_color="#333", corner_radius=20)
+        center_box = ctk.CTkFrame(v, fg_color="transparent")
         center_box.place(relx=0.5, rely=0.5, anchor="center", relwidth=0.7)
         
-        ctk.CTkLabel(center_box, text="Centro de Rastreo Viral", font=FONT_H1, text_color="white").pack(pady=(30, 5))
+        ctk.CTkLabel(center_box, text="Centro de Rastreo Viral", font=FONT_H1, text_color="white").pack(pady=(0, 5))
         ctk.CTkLabel(center_box, text="Define tu nicho y ajusta la sensibilidad.", font=FONT_BODY, text_color=C_TEXT_SEC).pack(pady=(0, 30))
         
         self.input_topic = CyberInput(center_box, "Nicho (ej. Fitness en casa, IA Tools...)")
-        self.input_topic.pack(fill="x", padx=30, pady=(0, 20))
+        self.input_topic.pack(fill="x", pady=(0, 20))
         
         sliders_frame = ctk.CTkFrame(center_box, fg_color="transparent")
-        sliders_frame.pack(fill="x", padx=30, pady=(0, 30))
+        sliders_frame.pack(fill="x", pady=(0, 30))
         
         f1 = ctk.CTkFrame(sliders_frame, fg_color="transparent")
         f1.pack(side="left", fill="x", expand=True, padx=(0, 15))
@@ -404,13 +358,13 @@ class App(ctk.CTk):
         self.slider_months.pack(fill="x")
         
         self.btn_run = CyberButton(center_box, "INICIAR ESCANEO", self.start_scan)
-        self.btn_run.pack(fill="x", padx=30)
+        self.btn_run.pack(fill="x")
         
         self.status_lbl = ctk.CTkLabel(center_box, text="Sistema Listo.", text_color=C_TEXT_SEC)
         self.status_lbl.pack(pady=(20, 0))
         
         self.progress = ctk.CTkProgressBar(center_box, height=4, progress_color=C_ACCENT, fg_color="#333")
-        self.progress.pack(fill="x", pady=(10, 30))
+        self.progress.pack(fill="x", pady=10)
         self.progress.set(0)
 
     def setup_results(self):
@@ -468,7 +422,7 @@ class App(ctk.CTk):
         if not topic: return messagebox.showwarning("!", "Falta el tema.")
         
         self.btn_run.configure(state="disabled", text="ESCANNEANDO...")
-        self.configure(cursor="watch") # Cursor reloj
+        self.configure(cursor="watch")
         
         likes = self.slider_likes.get()
         months = self.slider_months.get()
