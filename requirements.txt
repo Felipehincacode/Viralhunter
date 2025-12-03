@@ -1,0 +1,9 @@
+customtkinter
+requests
+pandas
+Pillow
+google-generativeai
+apify-client
+openpyxl
+
+
