@@ -37,10 +37,8 @@
 ## 🔍 ¿Qué hace exactamente la herramienta?
 
 1. **Escribes un tema principal** (ej: `Ácido hialurónico`, `Acné hormonal`, `Rutina skincare`, etc.)
-2. **La app llama a Gemini** y genera unas **30 keywords virales**:
-   - 10 en español
-   - 10 en inglés
-   - 10 en portugués
+2. **La app llama a Gemini** y genera unas **keywords**:
+   
 3. **Con esas keywords**, la app llama al actor de Apify `clockworks/tiktok-scraper` y descarga videos de TikTok relacionados
 4. **Filtra los resultados**:
    - ✅ Solo mantiene videos con **X likes mínimos** (configurable)
